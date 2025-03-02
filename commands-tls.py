@@ -9,6 +9,9 @@ def load_config():
 
 config = load_config()
 
+guild_ids = config.get('guild_ids', [])
+
+@app_commands.command(name="xpt", description="Displays text XP stats", guild_ids=guild_ids)
 async def text_xp_command(interaction: discord.Interaction, user: discord.Member = None):
     user = user or interaction.user
     data = get_user_data(user.id)
@@ -23,6 +26,7 @@ async def text_xp_command(interaction: discord.Interaction, user: discord.Member
 
     await interaction.response.send_message(embed=embed)
 
+@app_commands.command(name="toptext", description="Displays top text users", guild_ids=guild_ids)
 async def top_text_command(interaction: discord.Interaction, offset: int = 0):
     users = get_top_text_users(offset)
     embed = discord.Embed(
