@@ -45,6 +45,8 @@ async def process_voice_activity(member: discord.Member, before: discord.VoiceSt
         elif before.channel != after.channel and before.channel is not None and after.channel is not None:
             print(f"{get_current_time()} {Fore.CYAN}[VOICE SWITCH]{Style.RESET_ALL} User {member.name} switched voice channel from {before.channel.name} to {after.channel.name}.")
     except Exception as e:
+        error_message = f"Błąd podczas przetwarzania aktywności głosowej: {e}."
+        await send_error_embed(member, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} Error processing voice activity: {e}{Style.RESET_ALL}")
 
 async def add_voice_xp(member: discord.Member, time_spent: float):
@@ -79,8 +81,22 @@ async def add_voice_xp(member: discord.Member, time_spent: float):
         update_user_data(user_id, data['xpt'], data['ovxpt'], data['tlevel'], xpv, ovxpv, vlevel)
         print(f"{get_current_time()} {Fore.MAGENTA}[DATABASE]{Style.RESET_ALL} User {member.name} voice data updated.")
     except KeyError as e:
+        error_message = f"Brak klucza konfiguracyjnego: {e}. Sprawdź config.json."
+        await send_error_embed(member, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} Missing configuration key: {e}. Check config.json.{Style.RESET_ALL}")
     except ValueError as e:
+        error_message = f"Nieprawidłowa wartość w konfiguracji: {e}. Sprawdź config.json."
+        await send_error_embed(member, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} Invalid value in configuration: {e}. Check config.json.{Style.RESET_ALL}")
     except Exception as e:
+        error_message = f"Wystąpił nieoczekiwany błąd: {e}. Jeśli uważasz, że to nie wina niekompetentnej konfiguracji, skontaktuj się z @avefoxiu na Discordzie."
+        await send_error_embed(member, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} An unexpected error occurred: {e}. If you believe it is not due to incompetent setup, please contact @avefoxiu on discord.{Style.RESET_ALL}")
+
+async def send_error_embed(member: discord.Member, error_message: str):
+    embed = discord.Embed(
+        title="Wystąpił błąd!",
+        description=error_message + "\n\nZgłoś ten problem do @avefoxiu na Discordzie.",
+        color=discord.Color.red()
+    )
+    await member.guild.get_channel(member.voice.channel.id if member.voice and member.voice.channel else member.guild.system_channel).send(embed=embed)
