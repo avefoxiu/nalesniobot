@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from dbhelpers import get_user_data, get_top_text_users
 import json
+import datetime
 
 def load_config():
     with open('config.json', 'r') as f:
@@ -9,10 +10,7 @@ def load_config():
 
 config = load_config()
 
-guild_ids = config.get('guild_ids', [])
-
-@app_commands.command(name="xpt", description="Displays text XP stats", guild_ids=guild_ids)
-async def text_xp_command(interaction: discord.Interaction, user: discord.Member = None):
+async def text_xp_command(interaction: discord.Interaction, user: discord.Member = None, guild_ids=None):
     user = user or interaction.user
     data = get_user_data(user.id)
 
@@ -24,21 +22,44 @@ async def text_xp_command(interaction: discord.Interaction, user: discord.Member
     embed.add_field(name=config['text_xp_overall_xp_label'], value=data['ovxpt'], inline=False)
     embed.add_field(name=config['text_xp_current_xp_label'], value=data['xpt'], inline=False)
 
+    embed.set_footer(text=f"Invoked by {interaction.user.name} | {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
     await interaction.response.send_message(embed=embed)
 
-@app_commands.command(name="toptext", description="Displays top text users", guild_ids=guild_ids)
-async def top_text_command(interaction: discord.Interaction, offset: int = 0):
+async def top_text_command(interaction: discord.Interaction, offset: int = 0, guild_ids=None):
     users = get_top_text_users(offset)
     embed = discord.Embed(
         title=config['top_text_title'],
         color=int(config['text_message_color'].lstrip('#'), 16)
     )
+
     for i, user_data in enumerate(users):
-        user = interaction.guild.get_member(user_data['discord_id'])
-        if user:
-            embed.add_field(name=f"{i + 1 + offset}. {user.display_name}", value=f"{config['text_xp_level_label']}: {user_data['tlevel']}, {config['text_xp_overall_xp_label']}: {user_data['ovxpt']}", inline=False)
+        try:
+            user = await interaction.client.fetch_user(user_data['discord_id'])
+            if user:
+                required_xp = eval(config['required_text_xp_formula'].replace('level', str(user_data['tlevel'])))
+                embed.add_field(
+                    name=f"{i + 1 + offset}. {user.name}",
+                    value=f"{config['text_xp_level_label']}: {user_data['tlevel']}, {user_data['xpt']}/{required_xp} - {user_data['ovxpt']}",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name=f"{i + 1 + offset}. User not found",
+                    value=f"{config['text_xp_level_label']}: {user_data['tlevel']}, {user_data['xpt']}/(required_xp) - {user_data['ovxpt']}",
+                    inline=False
+                )
+        except discord.NotFound:
+            embed.add_field(
+                name=f"{i + 1 + offset}. User not found",
+                value=f"{config['text_xp_level_label']}: {user_data['tlevel']}, {user_data['xpt']}/(required_xp) - {user_data['ovxpt']}",
+                inline=False
+            )
 
     view = TopTextView(offset)
+
+    embed.set_footer(text=f"Invoked by {interaction.user.name} | {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
     await interaction.response.send_message(embed=embed, view=view)
 
 class TopTextView(discord.ui.View):
