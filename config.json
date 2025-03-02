@@ -1,0 +1,32 @@
+{
+  "token": "YOUR_BOT_TOKEN",
+  "prefix": "!",
+  "required_text_xp_formula": "(level^2) + 1",
+  "required_voice_xp_formula": "(level^2) + 1",
+  "text_levelup_channel": "TEXT_CHANNEL_ID",
+  "text_levelup_title": "Text Level Up!",
+  "text_levelup_message": "{user} leveled up to level {level}!",
+  "text_message_color": "#FF0000",
+  "voice_levelup_channel": "VOICE_CHANNEL_ID",
+  "voice_levelup_title": "Voice Level Up!",
+  "voice_levelup_message": "{user} leveled up to level {level}!",
+  "voice_message_color": "#00FF00",
+  "text_xp_title": "Text Stats",
+  "text_xp_level_label": "Level",
+  "text_xp_overall_xp_label": "Overall XP",
+  "text_xp_current_xp_label": "Current XP",
+  "voice_xp_title": "Voice Stats",
+  "voice_xp_level_label": "Level",
+  "voice_xp_overall_xp_label": "Overall XP",
+  "voice_xp_current_xp_label": "Current XP",
+  "top_text_title": "Top Text Users",
+  "top_voice_title": "Top Voice Users",
+  "voice_time_spent_label": "Time Spent",
+  "database": {
+    "host": "localhost",
+    "user": "YOUR_MYSQL_USER",
+    "password": "YOUR_MYSQL_PASSWORD",
+    "database": "YOUR_DATABASE_NAME",
+    "port": 3306
+  }
+}
