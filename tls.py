@@ -60,8 +60,22 @@ async def process_text_message(message: discord.Message):
         update_user_data(user_id, xpt, ovxpt, tlevel, data['xpv'], data['ovxpv'], data['vlevel'])
         print(f"{get_current_time()} {Fore.MAGENTA}[DATABASE]{Style.RESET_ALL} User {message.author.name} data updated")
     except KeyError as e:
+        error_message = f"Brak klucza konfiguracyjnego: {e}. Sprawdź config.json."
+        await send_error_embed(message, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} Missing configuration key: {e}. Check config.json.{Style.RESET_ALL}")
     except ValueError as e:
+        error_message = f"Nieprawidłowa wartość w konfiguracji: {e}. Sprawdź config.json."
+        await send_error_embed(message, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} Invalid value in configuration: {e}. Check config.json.{Style.RESET_ALL}")
     except Exception as e:
+        error_message = f"Wystąpił nieoczekiwany błąd: {e}. Zgłoś to do administratora."
+        await send_error_embed(message, error_message)
         print(f"{Fore.RED}[ERROR] {get_current_time()} An unexpected error occurred: {e}{Style.RESET_ALL}")
+
+async def send_error_embed(message: discord.Message, error_message: str):
+    embed = discord.Embed(
+        title="Wystąpił błąd!",
+        description=error_message + "\n\nZgłoś ten problem do administratora serwera.",
+        color=discord.Color.red()
+    )
+    await message.channel.send(embed=embed)
