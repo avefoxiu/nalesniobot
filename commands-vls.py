@@ -9,6 +9,9 @@ def load_config():
 
 config = load_config()
 
+guild_ids = config.get('guild_ids', [])
+
+@app_commands.command(name="xpv", description="Displays voice XP stats", guild_ids=guild_ids)
 async def voice_xp_command(interaction: discord.Interaction, user: discord.Member = None):
     user = user or interaction.user
     data = get_user_data(user.id)
@@ -23,6 +26,7 @@ async def voice_xp_command(interaction: discord.Interaction, user: discord.Membe
 
     await interaction.response.send_message(embed=embed)
 
+@app_commands.command(name="topvoice", description="Displays top voice users", guild_ids=guild_ids)
 async def top_voice_command(interaction: discord.Interaction, offset: int = 0):
     users = get_top_voice_users(offset)
     embed = discord.Embed(
