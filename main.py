@@ -1,39 +1,67 @@
 import discord
-from discord.ext import commands
+from discord import app_commands
 import json
-import tls
-import vls
-import datetime
+from ctls import text_xp_command, top_text_command, TopTextView
+from cvls import voice_xp_command, top_voice_command, TopVoiceView
+from dbhelpers import create_levels_table
+import os
 
 def load_config():
-    with open('config.json', 'r') as f:
-        return json.load(f)
+    try:
+        with open('config.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("[ERROR] config.json not found. Please create it.")
+        return None
+    except json.JSONDecodeError:
+        print("[ERROR] config.json is not valid JSON. Please correct it.")
+        return None
 
 config = load_config()
+
+if config is None:
+    exit()
+
+MY_GUILD = discord.Object(id=int(config['guild_ids'][0])) if config['guild_ids'] else None 
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 
-bot = commands.Bot(command_prefix=config['prefix'], intents=intents)
+class MyClient(discord.Client):
+    def __init__(self, *, intents: discord.Intents):
+        super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)
 
-def get_current_time():
-    now = datetime.datetime.now()
-    return now.strftime("%Y-%m-%d %H:%M:%S")
+    async def setup_hook(self):
+        if MY_GUILD:
+            self.tree.copy_global_to(guild=MY_GUILD)
+            await self.tree.sync(guild=MY_GUILD)
+        else:
+            await self.tree.sync()
 
-@bot.event
+client = MyClient(intents=intents)
+
+@client.event
 async def on_ready():
-    print(f'{get_current_time()} [INFO] Logged in as {bot.user.name}')
+    print(f'Logged in as {client.user} (ID: {client.user.id})')
+    print('------')
+    create_levels_table()
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-    await tls.process_text_message(message)
-    await bot.process_commands(message)
+@client.tree.command(name="textxp", description="Displays text XP stats")
+async def textxp(interaction: discord.Interaction, user: discord.Member = None):
+    await text_xp_command(interaction, user)
 
-@bot.event
-async def on_voice_state_update(member, before, after):
-    await vls.process_voice_activity(member, before, after)
+@client.tree.command(name="toptext", description="Displays top text users")
+async def toptext(interaction: discord.Interaction, offset: int = 0):
+    await top_text_command(interaction, offset)
 
-bot.run(config['token'])
+@client.tree.command(name="voicexp", description="Displays voice XP stats")
+async def voicexp(interaction: discord.Interaction, user: discord.Member = None):
+    await voice_xp_command(interaction, user)
+
+@client.tree.command(name="topvoice", description="Displays top voice users")
+async def topvoice(interaction: discord.Interaction, offset: int = 0):
+    await top_voice_command(interaction, offset)
+
+client.run(config['token'])
